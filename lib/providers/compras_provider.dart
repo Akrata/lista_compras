@@ -9,7 +9,6 @@ class ComprasProvider extends ChangeNotifier {
 
   agregarCompra(Item item) {
     listaCompra.add(item);
-    print(listaCompra[0].nombre);
     notifyListeners();
   }
 
@@ -20,6 +19,11 @@ class ComprasProvider extends ChangeNotifier {
 
   eliminarLista() {
     listaCompra.clear();
+    notifyListeners();
+  }
+
+  eliminarItem(index) {
+    listaCompra.removeAt(index);
     notifyListeners();
   }
 }

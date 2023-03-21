@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lista_compras/providers/compras_provider.dart';
 import 'package:lista_compras/screens/home_screen.dart';
 import 'package:lista_compras/theme/appTheme.dart';
 import 'package:provider/provider.dart';
-import '';
 
-void main() {
+void main() async {
+  await Hive.initFlutter();
+  var box = await Hive.openBox("myBox");
   runApp(const StateApp());
 }
 

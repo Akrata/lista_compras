@@ -1,7 +1,9 @@
+import 'package:basic_utils/basic_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:lista_compras/providers/compras_provider.dart';
 import 'package:lista_compras/theme/appTheme.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../models/item.dart';
 
@@ -120,48 +122,79 @@ class HomeScreen extends StatelessWidget {
         itemCount: comprasProvider.listaCompra.length,
         padding: EdgeInsets.all(40),
         itemBuilder: (BuildContext context, int index) {
-          return Container(
-            alignment: Alignment.center,
-            constraints: BoxConstraints(minHeight: 70),
-            margin: EdgeInsets.only(top: 20),
-            decoration: BoxDecoration(
-              color: comprasProvider.listaCompra[index].comprado
-                  ? AppTheme.greenLigth
-                  : Colors.green[300],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: CheckboxListTile(
-              activeColor: AppTheme.greenHard,
-              title: Text(
-                '${comprasProvider.listaCompra[index].nombre}',
-                style: TextStyle(
-                    overflow: TextOverflow.clip,
-                    fontSize: 20,
-                    decoration: comprasProvider.listaCompra[index].comprado
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none),
+          return Column(
+            children: [
+              Slidable(
+                endActionPane: ActionPane(
+                  motion: StretchMotion(),
+                  children: [
+                    SlidableAction(
+                      borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(12),
+                          topLeft: Radius.circular(12)),
+                      onPressed: (context) =>
+                          {comprasProvider.eliminarItem(index)},
+                      label: 'Eliminar?',
+                      icon: Icons.delete,
+                      spacing: 10,
+                      backgroundColor: Colors.red.shade300,
+                    )
+                  ],
+                ),
+                child: Container(
+                  alignment: Alignment.center,
+                  constraints: BoxConstraints(minHeight: 70),
+                  decoration: BoxDecoration(
+                    color: comprasProvider.listaCompra[index].comprado
+                        ? AppTheme.greenLigth
+                        : Colors.green[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: CheckboxListTile(
+                    checkColor: Colors.white,
+                    activeColor: AppTheme.greenHard,
+                    title: Text(
+                      StringUtils.capitalize(
+                          comprasProvider.listaCompra[index].nombre),
+                      style: TextStyle(
+                          overflow: TextOverflow.clip,
+                          fontSize: 20,
+                          decoration:
+                              comprasProvider.listaCompra[index].comprado
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none),
+                    ),
+                    secondary: Text(
+                      '${comprasProvider.listaCompra[index].cantidad}',
+                      style: TextStyle(
+                          overflow: TextOverflow.clip,
+                          fontSize: 20,
+                          decoration:
+                              comprasProvider.listaCompra[index].comprado
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none),
+                    ),
+                    onChanged: (bool? value) {
+                      comprasProvider.modificarCompra(index, value!);
+                    },
+                    value: comprasProvider.listaCompra[index].comprado,
+                  ),
+                ),
               ),
-              secondary: Text(
-                '${comprasProvider.listaCompra[index].cantidad}',
-                style: TextStyle(
-                    overflow: TextOverflow.clip,
-                    fontSize: 20,
-                    decoration: comprasProvider.listaCompra[index].comprado
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none),
-              ),
-              onChanged: (bool? value) {
-                comprasProvider.modificarCompra(index, value!);
-              },
-              value: comprasProvider.listaCompra[index].comprado,
-            ),
+              SizedBox(
+                height: 20,
+              )
+            ],
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _newItemPopUp,
         backgroundColor: AppTheme.greenMedium,
-        child: Icon(Icons.add),
+        child: const Icon(
+          Icons.add,
+          size: 30,
+        ),
       ),
     );
   }
