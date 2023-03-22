@@ -1,7 +1,13 @@
-class Item {
-  final String nombre;
-  final int cantidad;
-  bool comprado;
+import 'package:hive/hive.dart';
 
-  Item({required this.nombre, required this.cantidad, this.comprado = false});
+part 'item.g.dart';
+
+@HiveType(typeId: 1)
+class Item extends HiveObject {
+  @HiveField(0)
+  late String nombre;
+  @HiveField(1)
+  late int cantidad;
+  @HiveField(2)
+  late bool comprado = false;
 }

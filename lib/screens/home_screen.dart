@@ -1,6 +1,9 @@
 import 'package:basic_utils/basic_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lista_compras/providers/compras_provider.dart';
+import 'package:lista_compras/services/boxes.dart';
 import 'package:lista_compras/theme/appTheme.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -13,11 +16,10 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final comprasProvider = Provider.of<ComprasProvider>(context);
-
+    String nombre = '';
+    int cantidad = 0;
+    bool comprado = false;
     _newItemPopUp() {
-      String nombre = '';
-      int cantidad = 0;
-
       showDialog(
         context: context,
         builder: (context) => Form(
@@ -28,21 +30,24 @@ class HomeScreen extends StatelessWidget {
               children: [
                 TextField(
                   onChanged: (value) => nombre = value,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     label: Text("Producto"),
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 20,
                 ),
                 TextField(
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
+                  ],
                   onChanged: (value) => cantidad = int.parse(value),
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     label: Text("Cantidad"),
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 20,
                 ),
               ],
@@ -52,17 +57,22 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: Text("Cancelar"),
+                child: const Text("Cancelar"),
               ),
               TextButton(
                 onPressed: () {
-                  Item item = Item(nombre: nombre, cantidad: cantidad);
-                  comprasProvider.agregarCompra(item);
-                  nombre = '';
-                  cantidad = 0;
-                  Navigator.pop(context);
+                  if (nombre.isNotEmpty) {
+                    comprasProvider.agregarCompra(nombre, cantidad, comprado);
+                    Navigator.pop(context);
+                  } else {
+                    showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                              content: Text("Es necesario agregar algo..."),
+                            ));
+                  }
                 },
-                child: Text("Guardar"),
+                child: const Text("Guardar"),
               )
             ],
           ),
@@ -73,25 +83,25 @@ class HomeScreen extends StatelessWidget {
     _eliminarLista() {
       showDialog(
         context: context,
-        builder: (context) => comprasProvider.listaCompra.length > 0
+        builder: (context) => Boxes.getItems().isNotEmpty
             ? AlertDialog(
-                content: Text("Seguro desea eliminar toda la lista?"),
+                content: const Text("Seguro desea eliminar toda la lista?"),
                 actions: [
                   TextButton(
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child: Text("No"),
+                    child: const Text("No"),
                   ),
                   TextButton(
                       onPressed: () {
                         comprasProvider.eliminarLista();
                         Navigator.pop(context);
                       },
-                      child: Text("Si"))
+                      child: const Text("Si"))
                 ],
               )
-            : AlertDialog(
+            : const AlertDialog(
                 content: Text("La lista ya está vacía"),
               ),
       );
@@ -100,91 +110,96 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.greenLigth,
       appBar: AppBar(
-        toolbarHeight: 100,
-        elevation: 0,
-        title: Text(
+        toolbarHeight: 60,
+        title: const Text(
           "Lista de compras",
-          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: AppTheme.greenMedium,
         actions: [
           Container(
+            margin: const EdgeInsets.only(right: 20),
             child: IconButton(
               onPressed: _eliminarLista,
-              icon: Icon(Icons.delete, size: 30),
+              icon: const Icon(Icons.delete, size: 30),
             ),
-            margin: EdgeInsets.only(right: 20),
           )
         ],
       ),
-      body: ListView.builder(
-        itemCount: comprasProvider.listaCompra.length,
-        padding: EdgeInsets.all(40),
-        itemBuilder: (BuildContext context, int index) {
-          return Column(
-            children: [
-              Slidable(
-                endActionPane: ActionPane(
-                  motion: StretchMotion(),
-                  children: [
-                    SlidableAction(
-                      borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(12),
-                          topLeft: Radius.circular(12)),
-                      onPressed: (context) =>
-                          {comprasProvider.eliminarItem(index)},
-                      label: 'Eliminar?',
-                      icon: Icons.delete,
-                      spacing: 10,
-                      backgroundColor: Colors.red.shade300,
-                    )
-                  ],
-                ),
-                child: Container(
-                  alignment: Alignment.center,
-                  constraints: BoxConstraints(minHeight: 70),
-                  decoration: BoxDecoration(
-                    color: comprasProvider.listaCompra[index].comprado
-                        ? AppTheme.greenLigth
-                        : Colors.green[300],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: CheckboxListTile(
-                    checkColor: Colors.white,
-                    activeColor: AppTheme.greenHard,
-                    title: Text(
-                      StringUtils.capitalize(
-                          comprasProvider.listaCompra[index].nombre),
-                      style: TextStyle(
-                          overflow: TextOverflow.clip,
-                          fontSize: 20,
-                          decoration:
-                              comprasProvider.listaCompra[index].comprado
+      body: ValueListenableBuilder<Box<Item>>(
+        valueListenable: Boxes.getItems().listenable(),
+        builder: (context, box, _) {
+          final items = box.values.toList();
+          // comprasProvider.items = items;
+          return ListView.builder(
+            itemCount: items.length,
+            padding: const EdgeInsets.all(40),
+            itemBuilder: (BuildContext context, int index) {
+              return Column(
+                children: [
+                  Slidable(
+                    endActionPane: ActionPane(
+                      motion: const StretchMotion(),
+                      children: [
+                        SlidableAction(
+                          borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(12),
+                              topLeft: Radius.circular(12)),
+                          onPressed: (context) =>
+                              {comprasProvider.eliminarCompra(items[index])},
+                          label: 'Eliminar?',
+                          icon: Icons.delete,
+                          spacing: 10,
+                          backgroundColor: Colors.red.shade300,
+                        )
+                      ],
+                    ),
+                    child: Container(
+                      alignment: Alignment.center,
+                      constraints: const BoxConstraints(minHeight: 50),
+                      decoration: BoxDecoration(
+                        color: items[index].comprado
+                            ? AppTheme.greenLigth
+                            : Colors.green[300],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: CheckboxListTile(
+                        checkColor: Colors.white,
+                        activeColor: AppTheme.greenHard,
+                        title: Text(
+                          StringUtils.capitalize(items[index].nombre),
+                          style: TextStyle(
+                              color: Colors.grey.shade800,
+                              overflow: TextOverflow.clip,
+                              fontSize: 20,
+                              decoration: items[index].comprado
                                   ? TextDecoration.lineThrough
                                   : TextDecoration.none),
-                    ),
-                    secondary: Text(
-                      '${comprasProvider.listaCompra[index].cantidad}',
-                      style: TextStyle(
-                          overflow: TextOverflow.clip,
-                          fontSize: 20,
-                          decoration:
-                              comprasProvider.listaCompra[index].comprado
+                        ),
+                        secondary: Text(
+                          '${items[index].cantidad}',
+                          style: TextStyle(
+                              color: Colors.grey.shade800,
+                              overflow: TextOverflow.clip,
+                              fontSize: 20,
+                              decoration: items[index].comprado
                                   ? TextDecoration.lineThrough
                                   : TextDecoration.none),
+                        ),
+                        onChanged: (bool? value) {
+                          comprasProvider.editarCompra(items[index], value!);
+                        },
+                        value: items[index].comprado,
+                      ),
                     ),
-                    onChanged: (bool? value) {
-                      comprasProvider.modificarCompra(index, value!);
-                    },
-                    value: comprasProvider.listaCompra[index].comprado,
                   ),
-                ),
-              ),
-              SizedBox(
-                height: 20,
-              )
-            ],
+                  const SizedBox(
+                    height: 20,
+                  )
+                ],
+              );
+            },
           );
         },
       ),

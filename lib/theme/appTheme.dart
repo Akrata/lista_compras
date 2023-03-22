@@ -9,7 +9,7 @@ class AppTheme {
     // useMaterial3: true,
     appBarTheme: AppBarTheme(
       color: greenLigth,
-      elevation: 0,
+      // elevation: 10,
       centerTitle: true,
     ),
     textButtonTheme: TextButtonThemeData(
@@ -21,7 +21,7 @@ class AppTheme {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         primary: greenLigth,
-        shape: StadiumBorder(),
+        shape: const StadiumBorder(),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -32,7 +32,7 @@ class AppTheme {
         borderSide: BorderSide(
           color: greenHard,
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(10),
         ),
       ),
@@ -40,11 +40,11 @@ class AppTheme {
         borderSide: BorderSide(
           color: greenHard,
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomRight: Radius.circular(10),
         ),
       ),
-      border: OutlineInputBorder(),
+      border: const OutlineInputBorder(),
     ),
   );
 }

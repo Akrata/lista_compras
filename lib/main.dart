@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:lista_compras/models/item.dart';
 import 'package:lista_compras/providers/compras_provider.dart';
 import 'package:lista_compras/screens/home_screen.dart';
 import 'package:lista_compras/theme/appTheme.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
-  var box = await Hive.openBox("myBox");
+  Hive.registerAdapter(ItemAdapter());
+  await Hive.openBox<Item>('itemsBox');
+
   runApp(const StateApp());
 }
 
@@ -23,7 +26,7 @@ class StateApp extends StatelessWidget {
           create: (context) => ComprasProvider(),
         )
       ],
-      child: MainApp(),
+      child: const MainApp(),
     );
   }
 }
@@ -35,7 +38,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+      home: const HomeScreen(),
       theme: AppTheme.lightTheme,
     );
   }
